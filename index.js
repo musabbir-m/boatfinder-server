@@ -10,8 +10,38 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 //mongodb
 
 
-const uri = "mongodb+srv://<username>:<password>@cluster0.z1jayhr.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.PASSWORD}@cluster0.z1jayhr.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+async function run() {
+
+    try{
+        // Collectins
+        const categoryCollection= client.db('boatFinder').collection('categories')
+            
+
+        app.get( '/categories', async (req,res)=>{
+            const query= {}
+            const cursor= categoryCollection.find(query)
+            const result= await cursor.toArray()
+            res.send(result)
+        })
+
+        //save user
+        app.post('/user', async(req,res)=> {
+            const user= req.body
+            const result= await userColleciton.inserOne(user)
+            res.send(user)
+        })
+
+    }
+
+   finally{
+
+   }
+}
+
+run().catch(err=>console.log(err))
 
 
 app.get('/', (req,res)=>{

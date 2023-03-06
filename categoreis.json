@@ -1,0 +1,14 @@
+[
+    {
+        "categoryId": 1,
+        "categoryName": "Power"
+    },
+    {
+        "categoryId": 2,
+        "categoryName": "Sail"
+    },
+    {
+        "categoryId": 3,
+        "categoryName": "Unpower"
+    }
+]
