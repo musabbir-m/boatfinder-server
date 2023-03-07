@@ -36,7 +36,7 @@ async function run() {
             console.log(result);
         })
 
-        //check admin
+        //check admin role
 
         app.get('/user/admin/:email', async(req, res)=> {
             const email= req.params.email
@@ -45,6 +45,15 @@ async function run() {
             res.send({isAdmin: user?.role=== "admin"})
         })
 
+        //check buyer role
+        app.get('/user/buyer/:email', async(req,res)=> {
+            const email= req.params.email
+            const query= {email}
+            const user= await userCollection.findOne(query)
+            res.send( {isBuyer: user?.role=== "buyer"})
+        })
+
+     
     }
 
    finally{
