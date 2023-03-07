@@ -18,6 +18,7 @@ async function run() {
     try{
         // Collectins
         const categoryCollection= client.db('boatFinder').collection('categories')
+        const userCollection= client.db('boatFinder').collection('users')
             
 
         app.get( '/categories', async (req,res)=>{
@@ -30,8 +31,18 @@ async function run() {
         //save user
         app.post('/user', async(req,res)=> {
             const user= req.body
-            const result= await userColleciton.inserOne(user)
-            res.send(user)
+            const result= await userCollection.insertOne(user)
+            res.send(result)
+            console.log(result);
+        })
+
+        //check admin
+
+        app.get('/user/admin/:email', async(req, res)=> {
+            const email= req.params.email
+            const query= {email}
+            const user= await userCollection.findOne(query)
+            res.send({isAdmin: user?.role=== "admin"})
         })
 
     }
