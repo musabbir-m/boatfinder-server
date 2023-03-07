@@ -53,7 +53,13 @@ async function run() {
             res.send( {isBuyer: user?.role=== "buyer"})
         })
 
-     
+     //check seller role
+     app.get('user/seller/:email', async(req,res)=>{
+        const email= req.params.email 
+        const query= {email}
+        const user= await userCollection.findOne(query)
+        res.send({isSeller: user?.role==="seller"})
+     })
     }
 
    finally{
