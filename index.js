@@ -111,6 +111,13 @@ async function run() {
       const result = await userCollection.deleteOne(remove);
       res.send(result);
     });
+    //delete buyer
+    app.delete("/buyer/:id", async (req, res) => {
+      const id = req.params.id;
+      const remove = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(remove);
+      res.send(result);
+    });
 
     // verify seller
     app.put("/seller/:id", async (req, res) => {
@@ -132,6 +139,25 @@ async function run() {
       res.send(result);
     });
 
+     // verify buyer
+     app.put("/buyer/:id", async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const buyerStatus = req.body;
+        const option = { upsert: true };
+        const updateBuyer = {
+          $set: {
+            verified: buyerStatus.verified,
+          },
+        };
+        const result = await userCollection.updateOne(
+          filter,
+          updateBuyer,
+          option
+        );
+  
+        res.send(result);
+      });
     //check admin role
 
     app.get("/user/admin/:email", async (req, res) => {
