@@ -22,6 +22,7 @@ async function run() {
     const categoryCollection = client.db("boatFinder").collection("categories");
     const userCollection = client.db("boatFinder").collection("users");
     const boatCollection = client.db("boatFinder").collection("boats");
+    const bookingCollection = client.db("boatFinder").collection("booking");
 
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -37,6 +38,15 @@ async function run() {
       const query = { productCategory: category };
       const products = await boatCollection.find(query).toArray();
       res.send(products);
+    });
+
+    //bookings by a buyer
+
+    app.get("/booking/:id", async (req, res) => {
+      const email = req.params.id;
+      const query = { buyerEmail: email };
+      const booking = await bookingCollection.find(query).toArray();
+      res.send(booking);
     });
 
     //get sellers
@@ -61,6 +71,12 @@ async function run() {
       res.send(products);
     });
 
+    //get advertisement
+    app.get('/advertisement', async(req,res)=> {
+      const query= {advertised: 'true'}
+      const advertisement= await boatCollection.find(query).toArray()
+      res.send(advertisement)
+    })
     //advertise product
     app.put("/advertise/:id", async (req, res) => {
       const id = req.params.id;
@@ -93,6 +109,13 @@ async function run() {
     app.post("/product", async (req, res) => {
       const product = req.body;
       const result = await boatCollection.insertOne(product);
+      res.send(result);
+    });
+
+    //save booking
+    app.post("/booking", async (req, res) => {
+      const booking = req.body;
+      const result = await bookingCollection.insertOne(booking);
       res.send(result);
     });
 
@@ -139,25 +162,25 @@ async function run() {
       res.send(result);
     });
 
-     // verify buyer
-     app.put("/buyer/:id", async (req, res) => {
-        const id = req.params.id;
-        const filter = { _id: new ObjectId(id) };
-        const buyerStatus = req.body;
-        const option = { upsert: true };
-        const updateBuyer = {
-          $set: {
-            verified: buyerStatus.verified,
-          },
-        };
-        const result = await userCollection.updateOne(
-          filter,
-          updateBuyer,
-          option
-        );
-  
-        res.send(result);
-      });
+    // verify buyer
+    app.put("/buyer/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const buyerStatus = req.body;
+      const option = { upsert: true };
+      const updateBuyer = {
+        $set: {
+          verified: buyerStatus.verified,
+        },
+      };
+      const result = await userCollection.updateOne(
+        filter,
+        updateBuyer,
+        option
+      );
+
+      res.send(result);
+    });
     //check admin role
 
     app.get("/user/admin/:email", async (req, res) => {
