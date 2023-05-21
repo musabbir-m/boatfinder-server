@@ -9,7 +9,7 @@ const jwt = require("jsonwebtoken");
 
 //jwt check
 function verifyJWT(req, res, next) {
-  console.log(req.headers.authorization);
+  
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ message: "unathorized access" });
@@ -46,7 +46,6 @@ async function run() {
     //Jwonwebtoken
     app.post("/jwt", (req, res) => {
       const user = req.body;
-      console.log(user);
       const token = jwt.sign(user, process.env.TOKEN_SECRET);
       res.send({ token });
     });
@@ -72,7 +71,6 @@ async function run() {
 
     app.get("/booking", verifyJWT, async (req, res) => {
       const decoded = req.decoded;
-      console.log("inside bookind", decoded);
 
       if (decoded.email !== req.query.email) {
         res.status(403).send({ message: "unauthorized access" });
@@ -100,6 +98,11 @@ async function run() {
     // Get products added by a seller
     app.get("/myproducts", verifyJWT, async (req, res) => {
       const email = req.query.email;
+      const decoded= req.decoded 
+      if(decoded.email !== email ){
+            res.send(({message:'unauthorized access'}))
+      }
+      
       const query = { sellerEmail: email };
       const products = await boatCollection.find(query).toArray();
       res.send(products);
@@ -158,7 +161,6 @@ async function run() {
       const user = req.body;
       const result = await userCollection.insertOne(user);
       res.send(result);
-      console.log(result);
     });
 
     //delete a seller
@@ -238,13 +240,12 @@ async function run() {
       const query = { email };
       const user = await userCollection.findOne(query);
       res.send({ isSeller: user?.role === "seller" });
-      console.log(user);
     });
   } finally {
   }
 }
 
-run().catch((err) => console.log(err));
+run().catch((err) => {});
 
 app.get("/", (req, res) => {
   res.send("Boatfinder server is running");
