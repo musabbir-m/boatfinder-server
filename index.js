@@ -5,6 +5,25 @@ const app = express();
 const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
+const jwt = require("jsonwebtoken");
+
+//jwt check
+function verifyJWT(req, res, next) {
+  console.log(req.headers.authorization);
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "unathorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.TOKEN_SECRET, function (err, decoded) {
+    if (err) {
+      res.status(401).send({ message: "unathorized acces" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 //mongodb
@@ -24,6 +43,15 @@ async function run() {
     const boatCollection = client.db("boatFinder").collection("boats");
     const bookingCollection = client.db("boatFinder").collection("booking");
 
+    //Jwonwebtoken
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const token = jwt.sign(user, process.env.TOKEN_SECRET);
+      res.send({ token });
+    });
+
+    //product categories
     app.get("/categories", async (req, res) => {
       const query = {};
       const cursor = categoryCollection.find(query);
@@ -42,9 +70,15 @@ async function run() {
 
     //bookings by a buyer
 
-    app.get("/booking/:id", async (req, res) => {
-      const email = req.params.id;
-      const query = { buyerEmail: email };
+    app.get("/booking", verifyJWT, async (req, res) => {
+      const decoded = req.decoded;
+      console.log("inside bookind", decoded);
+
+      if (decoded.email !== req.query.email) {
+        res.status(403).send({ message: "unauthorized access" });
+      }
+
+      const query = { buyerEmail: req.query.email };
       const booking = await bookingCollection.find(query).toArray();
       res.send(booking);
     });
@@ -64,7 +98,7 @@ async function run() {
     });
 
     // Get products added by a seller
-    app.get("/myproducts", async (req, res) => {
+    app.get("/myproducts", verifyJWT, async (req, res) => {
       const email = req.query.email;
       const query = { sellerEmail: email };
       const products = await boatCollection.find(query).toArray();
@@ -72,11 +106,11 @@ async function run() {
     });
 
     //get advertisement
-    app.get('/advertisement', async(req,res)=> {
-      const query= {advertised: 'true'}
-      const advertisement= await boatCollection.find(query).toArray()
-      res.send(advertisement)
-    })
+    app.get("/advertisement", async (req, res) => {
+      const query = { advertised: "true" };
+      const advertisement = await boatCollection.find(query).toArray();
+      res.send(advertisement);
+    });
     //advertise product
     app.put("/advertise/:id", async (req, res) => {
       const id = req.params.id;
