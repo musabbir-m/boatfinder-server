@@ -6,10 +6,10 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 //jwt check
 function verifyJWT(req, res, next) {
-  
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ message: "unathorized access" });
@@ -81,6 +81,32 @@ async function run() {
       res.send(booking);
     });
 
+    //single booking info for payment
+
+    app.get("/payment/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.findOne(query);
+      res.send(result);
+    });
+
+    //payment intent
+
+    app.post("create-payment-intent", async (req, res) => {
+      const booking = req.body;
+      const price = booking.price;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
     //get sellers
     app.get("/seller", async (req, res) => {
       const query = { role: "seller" };
@@ -98,11 +124,11 @@ async function run() {
     // Get products added by a seller
     app.get("/myproducts", verifyJWT, async (req, res) => {
       const email = req.query.email;
-      const decoded= req.decoded 
-      if(decoded.email !== email ){
-            res.send(({message:'unauthorized access'}))
+      const decoded = req.decoded;
+      if (decoded.email !== email) {
+        res.send({ message: "unauthorized access" });
       }
-      
+
       const query = { sellerEmail: email };
       const products = await boatCollection.find(query).toArray();
       res.send(products);
