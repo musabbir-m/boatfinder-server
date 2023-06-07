@@ -42,6 +42,7 @@ async function run() {
     const userCollection = client.db("boatFinder").collection("users");
     const boatCollection = client.db("boatFinder").collection("boats");
     const bookingCollection = client.db("boatFinder").collection("booking");
+    const paymentCollection = client.db("boatFinder").collection("payment");
 
     //Jwonwebtoken
     app.post("/jwt", (req, res) => {
@@ -92,7 +93,7 @@ async function run() {
 
     //payment intent
 
-    app.post("create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", async (req, res) => {
       const booking = req.body;
       const price = booking.price;
       const amount = price * 100;
@@ -106,6 +107,22 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       });
     });
+
+    //save payment
+    app.post('/payment', async(req,res)=>{
+      const payment= req.body 
+      const result= await paymentCollection.insertOne(payment)
+      const id= payment.bookingId 
+      const filter= {_id: new ObjectId(id)}
+      const updatedDoc= {
+        $set: {
+          paid: true, 
+          transactionId: payment.transactionId
+        }
+      }
+      const updatedResult= await bookingCollection.updateOne(filter, updatedDoc)
+      res.send(result)
+    })
 
     //get sellers
     app.get("/seller", async (req, res) => {
