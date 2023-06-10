@@ -91,7 +91,7 @@ async function run() {
       res.send(result);
     });
 
-    //payment intent
+    //stripe payment intent
 
     app.post("/create-payment-intent", async (req, res) => {
       const booking = req.body;
@@ -109,20 +109,23 @@ async function run() {
     });
 
     //save payment
-    app.post('/payment', async(req,res)=>{
-      const payment= req.body 
-      const result= await paymentCollection.insertOne(payment)
-      const id= payment.bookingId 
-      const filter= {_id: new ObjectId(id)}
-      const updatedDoc= {
+    app.post("/payment", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      const id = payment.bookingId;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
         $set: {
-          paid: true, 
-          transactionId: payment.transactionId
-        }
-      }
-      const updatedResult= await bookingCollection.updateOne(filter, updatedDoc)
-      res.send(result)
-    })
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updatedResult = await bookingCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(result);
+    });
 
     //get sellers
     app.get("/seller", async (req, res) => {
@@ -195,7 +198,32 @@ async function run() {
     //save booking
     app.post("/booking", async (req, res) => {
       const booking = req.body;
+      const id= booking.productId
+      //prevent booking for already booked product
+      const query = {
+       productId: id
+      };
+      const alreadyBooked = await bookingCollection.find(query).toArray();
+      console.log("alreadybooked", alreadyBooked, "aleradybooked");
+      if (alreadyBooked.length) {
+        const message = "This product is already booked";
+        return res.send({ acknowledged: false, message });
+      }
+
+      //update the product booking status in boatCollection
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          booked: true,
+        },
+      };
+      const updatedResult = await boatCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      //post the booking info in bookingCollection
       const result = await bookingCollection.insertOne(booking);
+      console.log(result);
       res.send(result);
     });
 
